@@ -73,7 +73,11 @@ flowchart LR
 - Giriş ve kayıt uç noktalarında IP ve e-posta başına istek sınırı uygulanır (kaba kuvvet denemelerine karşı).
 - Hekim veya bakım verenin hasta verisine her erişimi bir erişim kaydına yazılır (sağlık değeri olmadan); hasta "verilerime kimler baktı" listesini görebilir.
 - Service worker sağlık verisini önbelleğe almaz; yalnızca kişisel veri içermeyen uygulama kabuğu saklanır.
-- Tüm trafik HTTPS (production); gizli anahtarlar `.env` / ortam değişkeni, repoda yok.
+- Tüm trafik HTTPS; TLS Nginx'te sonlandırılır. Nginx güvenlik başlıklarını ekler: HSTS, Content-Security-Policy, X-Frame-Options, X-Content-Type-Options, Referrer-Policy.
+- API, web, veritabanı ve Redis dışarıya açılmaz; tek giriş noktası Nginx'tir. Nginx `X-Forwarded-For`'u istemci IP'siyle yeniden yazar, API yalnızca Nginx'ten gelen bu başlığa güvenir.
+- Kullanıcı başına token bucket rate limit, hesap başına veri kazıma (scraping) girişimlerini sınırlar.
+- Loglar yapılandırılmış JSON'dur ve request ID taşır; sağlık değeri, mesaj içeriği ve token loglanmaz. Dağıtık izlerde (OpenTelemetry) yalnızca rota şablonu ve süre bulunur.
+- Gizli anahtarlar `.env` / ortam değişkeni, repoda yok.
 - Veritabanı yedekleri şifreli; demo ortamında yalnızca sentetik veri kullanılır.
 - Guardrail olayları (engellenen yanıtlar) mesaj içeriği olmadan loglanır.
 

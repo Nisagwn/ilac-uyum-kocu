@@ -6,6 +6,10 @@ Bu belge M1 aşamasında **planlanan** mimariyi anlatır. Bileşen adları ve s�
 
 Sistemi kimler kullanır, hangi dış servislerle konuşur?
 
+![mimari-baglam](diyagramlar/mimari-baglam.png)
+
+<details><summary>Mermaid kaynağı</summary>
+
 ```mermaid
 flowchart TB
     P(["👤 Hasta<br/>Tip 2 diyabet / hipertansiyon<br/>telefon, PWA"])
@@ -29,10 +33,16 @@ flowchart TB
     SYS -. "acil belirtide yönlendirir" .-> E112
 ```
 
+</details>
+
 ## 2. Bileşen diyagramı
 
+![mimari-bilesen](diyagramlar/mimari-bilesen.png)
+
+<details><summary>Mermaid kaynağı</summary>
+
 ```mermaid
-flowchart LR
+flowchart TB
     subgraph Browser["Tarayıcı (PWA)"]
         UI_P["Hasta ekranları<br/>Bugün · Ölçüm · Koç · İlaçlar · Özet"]
         UI_D["Hekim dashboard'u<br/>Hasta listesi · Hasta detayı · Uyarılar"]
@@ -98,6 +108,8 @@ flowchart LR
     SCH --> PUSH --> WPS --> SW
 ```
 
+</details>
+
 | Bileşen | Sorumluluk |
 |---|---|
 | Next.js PWA | Hasta (mobil), hekim (masaüstü) ve bakım veren arayüzleri; grafikler Recharts ile |
@@ -111,6 +123,10 @@ flowchart LR
 | Worker | Zamanlanmış hatırlatmalar ve uzun süren işler; API'yi bloklamaz |
 
 ## 3. Koç isteğinin yaşam döngüsü
+
+![dizi-koc-istegi](diyagramlar/dizi-koc-istegi.png)
+
+<details><summary>Mermaid kaynağı</summary>
 
 ```mermaid
 sequenceDiagram
@@ -153,7 +169,13 @@ sequenceDiagram
     A-->>H: yanıt + kaynaklar
 ```
 
+</details>
+
 ## 4. Hatırlatma (web push) akışı
+
+![dizi-web-push](diyagramlar/dizi-web-push.png)
+
+<details><summary>Mermaid kaynağı</summary>
 
 ```mermaid
 sequenceDiagram
@@ -178,7 +200,13 @@ sequenceDiagram
     SW-->>H: "İlaç zamanı" bildirimi → Bugün ekranı
 ```
 
+</details>
+
 ## 5. openFDA entegrasyonu
+
+![dizi-openfda](diyagramlar/dizi-openfda.png)
+
+<details><summary>Mermaid kaynağı</summary>
 
 ```mermaid
 sequenceDiagram
@@ -201,9 +229,15 @@ sequenceDiagram
     A-->>U: etken madde, uyarılar, etkileşimler
 ```
 
+</details>
+
 openFDA yanıtı yalnızca **etken madde adıyla** sorgulanır; hastaya ait hiçbir veri dışarı gönderilmez.
 
 ## 6. Dağıtım (Docker Compose)
+
+![dagitim-docker](diyagramlar/dagitim-docker.png)
+
+<details><summary>Mermaid kaynağı</summary>
 
 ```mermaid
 flowchart LR
@@ -223,6 +257,8 @@ flowchart LR
     api -. dış .-> ext["Claude · openFDA"]
     worker -. dış .-> ps["Push servisi"]
 ```
+
+</details>
 
 | Servis | Görev | Dışarı açık mı? |
 |---|---|---|

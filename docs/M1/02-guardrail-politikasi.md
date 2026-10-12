@@ -43,6 +43,10 @@ Hasta mesajı
 
 ### Karar akışı (diyagram)
 
+![guardrail-karar-akisi](diyagramlar/guardrail-karar-akisi.png)
+
+<details><summary>Mermaid kaynağı</summary>
+
 ```mermaid
 flowchart TD
     A["Hasta mesajı"] --> B{"Katman 1: girdi filtresi<br/>deterministik"}
@@ -60,6 +64,8 @@ flowchart TD
     E --> K
     I --> K
 ```
+
+</details>
 
 Katman 1 ve 3 **LLM'den bağımsızdır**; model hata yapsa bile güvenlik garantisi bu iki katmandan gelir.
 

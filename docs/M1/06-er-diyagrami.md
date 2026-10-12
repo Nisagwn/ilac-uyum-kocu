@@ -2,6 +2,10 @@
 
 M1 aşamasındaki **planlanan** veri modelidir. Proje tanımındaki 10 tabloyu (users, patients, clinicians, medications, medication_schedules, dose_logs, measurements, coach_messages, alerts, education_contents) ve bakım veren ilişkisi için bir bağlantı tablosunu içerir. Kesin şema M2'de Alembic migration'larıyla oluşturulacaktır; web push abonelikleri, hatırlatma kayıtları ve LLM maliyet kaydı gibi yardımcı tablolar ilgili teslimde eklenecektir.
 
+![er-diyagrami](diyagramlar/er-diyagrami.png)
+
+<details><summary>Mermaid kaynağı</summary>
+
 ```mermaid
 erDiagram
     users ||--o| patients : "hasta profili"
@@ -108,6 +112,8 @@ erDiagram
         datetime created_at
     }
 ```
+
+</details>
 
 ## Notlar
 

@@ -29,6 +29,10 @@ Proje tanımı: [docs/PROJE_TANIMI.md](docs/PROJE_TANIMI.md)
 
 ## Mimari (özet)
 
+![mimari-ozet](docs/M1/diyagramlar/mimari-ozet.png)
+
+<details><summary>Mermaid kaynağı</summary>
+
 ```mermaid
 flowchart LR
     U["Hasta · Hekim · Bakım veren<br/>Next.js PWA"] --> PX["Next.js proxy<br/>httpOnly çerez"]
@@ -40,6 +44,8 @@ flowchart LR
     WK["Worker<br/>APScheduler"] --> DB
     WK --> WP["Web Push (VAPID)"] -.-> U
 ```
+
+</details>
 
 Ayrıntı: [docs/M1/05-mimari.md](docs/M1/05-mimari.md)
 

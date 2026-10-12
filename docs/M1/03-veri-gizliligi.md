@@ -34,6 +34,10 @@ Yetkisiz erişimde kaynak varlığını sızdırmamak için **404** döner.
 
 ## Veri akışları ve güven sınırları
 
+![veri-akislari-guven-sinirlari](diyagramlar/veri-akislari-guven-sinirlari.png)
+
+<details><summary>Mermaid kaynağı</summary>
+
 ```mermaid
 flowchart LR
     subgraph T1["Güvenilmeyen bölge: kullanıcı cihazı"]
@@ -59,6 +63,8 @@ flowchart LR
     API -- "bildirim yükü" --> PUSH
     PUSH -.-> BR
 ```
+
+</details>
 
 ## 4. Teknik önlemler
 

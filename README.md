@@ -2,6 +2,13 @@
 
 Tip 2 diyabet ve hipertansiyon hastalarının ilaç ve ölçüm takibini yaptığı, LLM koçun **tıbbi tavsiye vermeden** kişiselleştirilmiş, veriye dayalı ve kaynaklı geri bildirim verdiği, hekim için uyum dashboard'u sunan sağlık platformu.
 
+**Öne çıkan mimari özellikler (plan)**
+
+- **Güvenlik LLM'e bırakılmaz:** acil belirti ve doz soruları deterministik filtreyle LLM'den önce yakalanır; red-team seti CI'da koşar.
+- **Ölçeklenebilir:** Nginx reverse proxy + load balancer arkasında durumsuz FastAPI kopyaları; token bucket rate limit.
+- **Dayanıklı:** idempotent yazma uçları, kuyruk + worker, retry/backoff, dead-letter queue, circuit breaker, lider seçimli zamanlayıcı.
+- **Gözlemlenebilir:** Prometheus + Grafana, OpenTelemetry + Jaeger; k6 ile yük testi.
+
 > ⚠️ Koç teşhis koymaz ve ilaç dozu önermez. Acil durumlarda **112**'yi arayın. Proje yalnızca sentetik demo verisiyle çalışır.
 
 Proje tanımı: [docs/PROJE_TANIMI.md](docs/PROJE_TANIMI.md)
@@ -24,7 +31,7 @@ Proje tanımı: [docs/PROJE_TANIMI.md](docs/PROJE_TANIMI.md)
 | [02 — Guardrail politikası](docs/M1/02-guardrail-politikasi.md) | Koçun asla yapmadıkları, 3 katmanlı kontrol, acil belirti kategorileri, sabit yanıtlar |
 | [03 — Veri gizliliği](docs/M1/03-veri-gizliligi.md) | KVKK ilkeleri, rol bazlı erişim matrisi, LLM'e giden veri, güven sınırları |
 | [04 — Kullanıcı akışları](docs/M1/04-kullanici-akislari.md) | Hasta, hekim, bakım veren ve acil belirti akışları |
-| [05 — Sistem mimarisi](docs/M1/05-mimari.md) | Bağlam, bileşen, koç/hatırlatma/openFDA dizileri, dağıtım, tasarım kararları |
+| [05 — Sistem mimarisi](docs/M1/05-mimari.md) | Bağlam, bileşen, istek yolu, koç kuyruğu, circuit breaker, hatırlatma, openFDA, dağıtım; ölçeklenebilirlik/dayanıklılık, rate limit politikası, yük testi planı |
 | [06 — ER diyagramı (taslak)](docs/M1/06-er-diyagrami.md) | Planlanan veri modeli |
 
 ## Mimari (özet)
@@ -35,13 +42,15 @@ Proje tanımı: [docs/PROJE_TANIMI.md](docs/PROJE_TANIMI.md)
 
 ```mermaid
 flowchart LR
-    U["Hasta · Hekim · Bakım veren<br/>Next.js PWA"] --> PX["Next.js proxy<br/>httpOnly çerez"]
-    PX --> API["FastAPI<br/>JWT + roller · guardrail · koç"]
+    U["Hasta · Hekim · Bakım veren<br/>Next.js PWA"] -- HTTPS --> NGX["Nginx<br/>reverse proxy · TLS<br/>load balancer"]
+    NGX --> PX["Next.js<br/>httpOnly çerez"] --> NGX
+    NGX --> API["FastAPI × N<br/>rate limit · idempotency<br/>JWT + roller · guardrail"]
     API --> DB[("PostgreSQL<br/>+ pgvector")]
-    API --> RD[("Redis")]
-    API --> LLM["Claude API<br/>tool use"]
+    API --> RD[("Redis<br/>önbellek · kuyruk")]
     API --> FDA["openFDA"]
-    WK["Worker<br/>APScheduler"] --> DB
+    RD --> WK["Worker × M<br/>koç · zamanlayıcı (lider)<br/>circuit breaker"]
+    WK --> LLM["Claude API<br/>tool use"]
+    WK --> DB
     WK --> WP["Web Push (VAPID)"] -.-> U
 ```
 
@@ -56,4 +65,5 @@ Ayrıntı: [docs/M1/05-mimari.md](docs/M1/05-mimari.md)
 | Frontend | Next.js (PWA), TypeScript, Recharts, shadcn/ui |
 | Backend | FastAPI, SQLAlchemy, Alembic, APScheduler, pywebpush |
 | LLM | Claude API (tool use + structured output), pgvector (RAG) |
-| Altyapı | PostgreSQL, Redis, Docker Compose, GitHub Actions |
+| Altyapı | PostgreSQL, Redis, Nginx (reverse proxy + LB), Docker Compose, GitHub Actions |
+| Gözlemlenebilirlik / test | Prometheus, Grafana, OpenTelemetry, Jaeger, k6 |

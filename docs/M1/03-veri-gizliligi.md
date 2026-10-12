@@ -30,7 +30,8 @@ Yetkisiz erişimde kaynak varlığını sızdırmamak için **404** döner.
 
 - Hastanın adı, e-postası ve kimlik bilgisi **gönderilmez**; koç yalnızca takma kimlik (`patient_ref`) ve tool çağrısıyla dönen sayısal özetleri görür.
 - Tool'lar yalnızca o oturumdaki hastanın verisine erişebilir (hasta kimliği sunucu tarafında bağlanır, model parametre olarak veremez).
-- Sağlayıcı tarafında veri saklama/eğitime kullanma kapalı API ayarları tercih edilir; README'de belirtilir.
+- Sağlayıcı tarafında veri saklama/eğitime kullanma kapalı API ayarları tercih edilir (OpenRouter'da veri toplamaya izin vermeyen sağlayıcılarla sınırlama); README'de belirtilir.
+- **Veri konumu:** Model M4'te seçilecektir (bkz. [01 §5.1](01-proje-onerisi.md#51-llm-seçimi-deneyerek-karar)). Adayların bir kısmı veriyi yurt dışında (ör. ABD, Çin) işler. KVKK kapsamında bu bir yurt dışı veri aktarımıdır. Demo yalnızca sentetik veri ve takma kimlikle çalıştığı için risk sınırlıdır. Gerçek kullanımda açık rıza metninde sağlayıcı ve ülke belirtilmeli, mümkünse veri işleme konumu seçilebilen bir sağlayıcı tercih edilmelidir. Seçilen sağlayıcının konumu ve politikası M4'te bu belgeye eklenecektir.
 
 ## Veri akışları ve güven sınırları
 
@@ -50,7 +51,7 @@ flowchart LR
         RD[("Redis<br/>önbellek ve sayaç")]
     end
     subgraph T3["Üçüncü taraf servisler"]
-        LLM["Claude API<br/>ad ve e-posta YOK<br/>yalnızca takma kimlik ve tool özetleri"]
+        LLM["LLM sağlayıcısı<br/>ad ve e-posta YOK<br/>yalnızca takma kimlik ve tool özetleri"]
         FDA["openFDA<br/>yalnızca ilaç etken madde adı"]
         PUSH["Web push servisi<br/>sağlık verisi YOK<br/>genel hatırlatma metni"]
     end

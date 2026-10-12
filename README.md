@@ -49,7 +49,7 @@ flowchart LR
     API --> RD[("Redis<br/>önbellek · kuyruk")]
     API --> FDA["openFDA"]
     RD --> WK["Worker × M<br/>koç · zamanlayıcı (lider)<br/>circuit breaker"]
-    WK --> LLM["Claude API<br/>tool use"]
+    WK --> LLM["LLM sağlayıcısı<br/>tool use · M4'te seçilecek"]
     WK --> DB
     WK --> WP["Web Push (VAPID)"] -.-> U
 ```
@@ -64,6 +64,6 @@ Ayrıntı: [docs/M1/05-mimari.md](docs/M1/05-mimari.md)
 |---|---|
 | Frontend | Next.js (PWA), TypeScript, Recharts, shadcn/ui |
 | Backend | FastAPI, SQLAlchemy, Alembic, APScheduler, pywebpush |
-| LLM | Claude API (tool use + structured output), pgvector (RAG) |
+| LLM | Sağlayıcıdan bağımsız koç katmanı (tool use + structured output); model M3–M4'te adaylar denenerek seçilecek ([ayrıntı](docs/M1/01-proje-onerisi.md#51-llm-seçimi-deneyerek-karar)), pgvector (RAG) |
 | Altyapı | PostgreSQL, Redis, Nginx (reverse proxy + LB), Docker Compose, GitHub Actions |
 | Gözlemlenebilirlik / test | Prometheus, Grafana, OpenTelemetry, Jaeger, k6 |

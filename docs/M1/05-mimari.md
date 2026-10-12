@@ -24,7 +24,7 @@ flowchart TB
 
     SYS["<b>İlaç Uyumu ve Yaşam Tarzı Koçu</b><br/>ilaç planı · doz kaydı · ölçüm<br/>LLM koç · hekim dashboard'u"]
 
-    LLM["Claude API<br/>tool use + structured output"]
+    LLM["LLM sağlayıcısı (M4'te seçilecek)<br/>tool use + structured output"]
     FDA["openFDA<br/>Drug Label API"]
     WP["Tarayıcı push servisi<br/>FCM · Mozilla · APNs"]
     E112["112 Acil<br/>(sistem dışı, hasta arar)"]
@@ -84,7 +84,7 @@ flowchart TB
     subgraph Worker["Worker × M kopya"]
         Q["Kuyruk tüketici<br/>3 deneme + backoff"]
         COACH["Koç orkestrasyonu<br/>tool-use döngüsü + Guardrail Katman 3"]
-        CB2["Circuit breaker<br/>Claude API<br/>açıkken → kural tabanlı koç"]
+        CB2["Circuit breaker<br/>LLM sağlayıcısı<br/>açıkken → kural tabanlı koç"]
         TOOLS["Tool'lar + RAG"]
         SCH["APScheduler<br/>yalnızca lider kopya<br/>(PostgreSQL advisory lock)"]
         PUSH["pywebpush (VAPID)"]
@@ -92,7 +92,7 @@ flowchart TB
 
     DB[("PostgreSQL + pgvector")]
     RD[("Redis<br/>önbellek · rate limit kovaları<br/>iş kuyruğu · DLQ")]
-    CL["Claude API"]
+    CL["LLM sağlayıcısı<br/>OpenRouter / Anthropic"]
     FDA["openFDA"]
     WPS["Push servisi<br/>→ tarayıcıdaki Service Worker"]
 
@@ -134,7 +134,7 @@ flowchart TB
 | Rol kontrolü | Her istekte JWT doğrulama ve hasta-erişim kuralı; yetkisizse 404 |
 | Idempotency | Aynı `Idempotency-Key` ile tekrar gelen yazma isteğine ilk yanıt aynen döner, kayıt ikinci kez oluşmaz |
 | Guardrail | Katman 1 API'de (LLM'den önce, eşzamanlı), Katman 3 worker'da (LLM çıktısından sonra) |
-| Koç | Worker'da Claude ile tool-use döngüsü; structured output üretir |
+| Koç | Worker'da LLM ile tool-use döngüsü; structured output üretir. Model yapılandırmadan seçilir (bkz. [01 §5.1](01-proje-onerisi.md#51-llm-seçimi-deneyerek-karar)) |
 | Circuit breaker | Dış servis art arda hata verirse bir süre çağırmaz, doğrudan yedek yola geçer |
 | Worker | Koç işleri, hatırlatmalar; başarısız iş 3 denemeden sonra DLQ'ya |
 | Lider kilidi | Birden çok worker kopyasından yalnızca biri zamanlayıcıyı çalıştırır |
@@ -200,7 +200,7 @@ sequenceDiagram
     participant Q as Redis kuyruğu
     participant W as Worker
     participant CB as Circuit breaker
-    participant L as Claude API
+    participant L as LLM sağlayıcısı
     participant D as PostgreSQL
 
     H->>A: POST /v1/coach/chat (Idempotency-Key)
@@ -217,7 +217,7 @@ sequenceDiagram
         A->>Q: job_id
         A-->>H: 202 Accepted + job_id
         W->>Q: işi al
-        W->>CB: Claude çağrılabilir mi?
+        W->>CB: LLM çağrılabilir mi?
         alt devre açık / bütçe dolu
             CB-->>W: kural tabanlı yedek koç
         else devre kapalı
@@ -242,7 +242,7 @@ sequenceDiagram
 
 ## 5. Circuit breaker durumları
 
-Claude API ve openFDA için ayrı birer devre kesici çalışır. Durum Redis'te tutulur, böylece tüm kopyalar aynı kararı paylaşır.
+LLM sağlayıcısı ve openFDA için ayrı birer devre kesici çalışır. Durum Redis'te tutulur, böylece tüm kopyalar aynı kararı paylaşır.
 
 ![durum-circuit-breaker](diyagramlar/durum-circuit-breaker.png)
 
@@ -265,7 +265,7 @@ stateDiagram-v2
 
 | Servis | Devre açıkken davranış |
 |---|---|
-| Claude API | Kural tabanlı koç yanıt verir; guardrail'ler aynen geçerlidir. Haftalık özet şablon metinle üretilir. |
+| LLM sağlayıcısı | Kural tabanlı koç yanıt verir; guardrail'ler aynen geçerlidir. Haftalık özet şablon metinle üretilir. |
 | openFDA | Önbellekteki son etiket döner; yoksa "ilaç bilgisi şu an alınamıyor" mesajı. |
 
 ## 6. Hatırlatma (web push) akışı
@@ -381,7 +381,7 @@ flowchart LR
     graf --> prom
     apis & workers -. OTLP .-> jae
     apis -. dış .-> ext["openFDA"]
-    workers -. dış .-> ext2["Claude · Push servisi"]
+    workers -. dış .-> ext2["LLM sağlayıcısı · Push servisi"]
 ```
 
 </details>
@@ -417,7 +417,7 @@ flowchart LR
 | Mesaj kuyruğu + worker | LLM işleri API dışında | API isteği saniyelerce bloklanmaz | M4 |
 | Retry + üstel backoff | Geçici hatada yeniden dener | LLM sağlayıcısı 429 / 5xx dönebilir | M4 |
 | Dead-letter queue | 3 denemeden sonra iş DLQ'ya, metrikte görünür | Sessizce kaybolan koç mesajı olmaz | M4 |
-| Circuit breaker | Art arda hatada dış servisi bir süre çağırmaz | Claude/openFDA çökerse sistem yavaşlamaz, yedek yol hemen devreye girer | M4 |
+| Circuit breaker | Art arda hatada dış servisi bir süre çağırmaz | LLM sağlayıcısı veya openFDA çökerse sistem yavaşlamaz, yedek yol hemen devreye girer | M4 |
 | Dağıtık kilit (lider seçimi) | PostgreSQL advisory lock | Worker çoğaltılsa da hatırlatma tek kez gider | M4 |
 | Graceful shutdown | SIGTERM'de süren işi bitir | Güncelleme sırasında yarım kalan koç işi olmaz | M4 |
 | Gözlemlenebilirlik | Prometheus + Grafana, JSON log + request ID, OpenTelemetry + Jaeger | Bir koç isteğinin Nginx → API → kuyruk → worker → LLM yolu tek zaman çizelgesinde görülür | M2–M5 |
@@ -438,7 +438,7 @@ flowchart LR
 
 - **Senaryo:** 200 sanal hasta sabah 08:00 yoğunluğunu taklit eder: giriş → bugün ekranı → "aldım" → ölçüm girişi. 20 sanal hekim paneli yeniler.
 - **Karşılaştırma:** `--scale api=1` ve `--scale api=3`; istek/sn, p95/p99 gecikme, hata oranı.
-- **Dayanıklılık:** Test sürerken bir API kopyası durdurulur. Beklenti: hata oranı geçici olarak artar, sonra sıfıra iner. Claude API taklidi hata verdirilir. Beklenti: devre açılır, koç yedek yanıtla devam eder.
+- **Dayanıklılık:** Test sürerken bir API kopyası durdurulur. Beklenti: hata oranı geçici olarak artar, sonra sıfıra iner. LLM sağlayıcısı taklidi hata verdirilir. Beklenti: devre açılır, koç yedek yanıtla devam eder.
 - **Başarı ölçütü:** 3 kopyada p95 < 300 ms (LLM hariç uçlar), hata oranı < %1.
 
 ## 10. Planlanan monorepo yapısı

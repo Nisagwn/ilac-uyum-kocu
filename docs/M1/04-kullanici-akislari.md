@@ -2,9 +2,13 @@
 
 ## A. Hasta — günlük akış
 
+![akis-a-hasta-gunluk](diyagramlar/akis-a-hasta-gunluk.png)
+
+<details><summary>Mermaid kaynağı</summary>
+
 ```mermaid
 flowchart TD
-    A[Web push: "Metformin zamanı"] --> B[Bugün ekranı]
+    A["Web push: Metformin zamanı"] --> B[Bugün ekranı]
     B --> C{Dozu aldı mı?}
     C -- Aldım --> D[dose_log: taken]
     C -- Almadım --> E[dose_log: skipped + isteğe bağlı neden]
@@ -16,7 +20,13 @@ flowchart TD
     I --> J[Koç kartı: günün geri bildirimi]
 ```
 
+</details>
+
 ## B. Hasta — koç sohbeti
+
+![akis-b-koc-sohbeti](diyagramlar/akis-b-koc-sohbeti.png)
+
+<details><summary>Mermaid kaynağı</summary>
 
 ```mermaid
 flowchart TD
@@ -35,7 +45,13 @@ flowchart TD
     M -- Evet --> N[Hekime alert]
 ```
 
+</details>
+
 ## C. Hekim — haftalık inceleme
+
+![akis-c-hekim-haftalik](diyagramlar/akis-c-hekim-haftalik.png)
+
+<details><summary>Mermaid kaynağı</summary>
 
 ```mermaid
 flowchart TD
@@ -46,11 +62,17 @@ flowchart TD
     E --> F[Uyarıyı incele / kapat]
 ```
 
+</details>
+
 ## D. Bakım veren
 
 Hasta, ayarlardan e-posta ile bakım veren ekler → bakım veren hesabıyla giriş yapar → bağlı hastanın bugün ekranını, grafiklerini ve uyarılarını **salt okunur** görür.
 
 ## E. Acil belirti akışı
+
+![akis-e-acil-belirti](diyagramlar/akis-e-acil-belirti.png)
+
+<details><summary>Mermaid kaynağı</summary>
 
 ```mermaid
 flowchart TD
@@ -64,7 +86,13 @@ flowchart TD
     B -- "hayır" --> I["Normal koç akışı"]
 ```
 
+</details>
+
 ## F. Hekim — triyaj akışı
+
+![akis-f-hekim-triyaj](diyagramlar/akis-f-hekim-triyaj.png)
+
+<details><summary>Mermaid kaynağı</summary>
 
 ```mermaid
 flowchart TD
@@ -80,7 +108,13 @@ flowchart TD
     H --> I["Uyarıyı okundu işaretle"]
 ```
 
+</details>
+
 ## G. Bakım veren — akış
+
+![akis-g-bakim-veren](diyagramlar/akis-g-bakim-veren.png)
+
+<details><summary>Mermaid kaynağı</summary>
 
 ```mermaid
 flowchart TD
@@ -91,4 +125,6 @@ flowchart TD
     E -- "evet" --> F["Reddedilir: salt okunur"]
     E -- "hayır" --> C
 ```
+
+</details>
 

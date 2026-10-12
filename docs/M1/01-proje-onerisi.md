@@ -71,8 +71,35 @@ Hastanın ilaç planını, kan şekeri/tansiyon ölçümlerini ve günlük notla
 | Reverse proxy / LB | Nginx | TLS sonlandırma, gzip, güvenlik başlıkları, API kopyaları arasında yük dağıtımı (`least_conn`) |
 | Gözlemlenebilirlik | Prometheus + Grafana, OpenTelemetry + Jaeger | Metrik panoları ve bir isteğin servisler arası izinin (trace) görülmesi |
 | Yük testi | k6 | Tek ve çok kopya karşılaştırması; dayanıklılık senaryoları |
-| LLM | Claude API (tool use + structured output) | Araç çağrısı ve şemaya uyan çıktı yerleşik; sağlayıcı soyutlama katmanı ile başka sağlayıcıya geçilebilir |
+| LLM | Sağlayıcıdan bağımsız koç katmanı; OpenRouter (tek anahtarla çok model) + doğrudan Anthropic desteği | Model henüz sabitlenmedi; adaylar aynı test setiyle denenip seçilecek (bkz. §5.1). Tool use ve JSON şemalı structured output destekleyen her model takılabilir |
 | Altyapı | Docker Compose, GitHub Actions | Tek komutla kurulum; her push'ta test + guardrail seti + build |
+
+### 5.1 LLM seçimi: deneyerek karar
+
+Koçta kullanılacak model M1'de sabitlenmez. Koç katmanı sağlayıcıdan bağımsız yazılır: model adı yapılandırmadan (`LLM_MODEL`) değişir, kod değişmez. Seçim M3'teki prototip koçla başlayan denemelerden sonra **M4'te** aşağıdaki ölçütlerle yapılır ve sonuç M4 raporuna yazılır.
+
+**Aday modeller**
+
+| Aday | Erişim | Neden aday? | Dikkat edilecek nokta |
+|---|---|---|---|
+| DeepSeek Flash | OpenRouter | Çok düşük maliyet; tool calling ve JSON şema desteği | Sağlayıcının veri işleme konumu (bkz. [03 §3](03-veri-gizliligi.md#3-llme-giden-veri)); Türkçe kalite ölçülmeli |
+| Claude Sonnet / Haiku | OpenRouter veya Anthropic API | Proje tanımında önerilen sağlayıcı; tool use ve structured output yerleşik | Maliyet daha yüksek |
+| Ücretsiz modeller | OpenRouter | Maliyetsiz geliştirme ve deneme | Sıkı istek sınırları (429), modellerin kaldırılabilmesi, istemlerin kaydedilme olasılığı; demo için riskli |
+
+**Değerlendirme ölçütleri**
+
+| Ölçüt | Nasıl ölçülür | Kabul eşiği |
+|---|---|---|
+| Güvenlik | Guardrail red-team seti, Katman 3'ün engellediği yanıt oranı | Seti %100 geçer; engellenen yanıt oranı düşük |
+| Tool-use doğruluğu | Senaryolarda doğru tool'u doğru parametreyle çağırma oranı | ≥ %90 |
+| Structured output | JSON şemasına uymayan yanıt oranı | ≤ %2 |
+| Kaynak gösterme | `sources` alanı dolu ve doğrulanmış yanıt oranı | Eğitim içeriği kullanılan yanıtların tamamı |
+| Türkçe kalite | 20 örnek yanıtın elle puanlanması (anlaşılırlık, ton, motivasyon) | Ortalama ≥ 4/5 |
+| Gecikme | p95 yanıt süresi | ≤ 10 sn |
+| Maliyet | Mesaj başına ortalama USD (`llm_usage` kaydı) | Aylık bütçe tavanı içinde |
+| Gizlilik | Sağlayıcının veri saklama ve eğitimde kullanma politikası | Eğitimde kullanmama seçeneği olmalı |
+
+Güvenlik garantisi modelden gelmez: acil belirti ve doz tespiti LLM'den önce, çıktı doğrulaması LLM'den sonra deterministik kodla yapılır. Bu yüzden hangi model seçilirse seçilsin guardrail davranışı aynı kalır; modeller kalite, maliyet ve hız açısından karşılaştırılır. Seçilen model dışındakiler yapılandırmayla seçilebilir alternatif olarak kalır.
 
 ## 6. Riskler ve önlemler
 
@@ -95,5 +122,5 @@ Hastanın ilaç planını, kan şekeri/tansiyon ölçümlerini ve günlük notla
 | M1 | 23 Eki 2026 | Bu belge seti: öneri, kullanıcı akışları, guardrail politikası, veri gizliliği, mimari ve ER diyagramı |
 | M2 | 13 Kas 2026 | Şema + migration, JWT rolleri, ilaç/doz/ölçüm CRUD, openFDA uç noktası, uyum skoru, Swagger, CI; Nginx reverse proxy + load balancing, liveness/readiness, token bucket rate limit, idempotency, `/v1` sürümleme |
 | M3 | 11 Ara 2026 | Hasta günlük akışı ve hekim dashboard'u uçtan uca, PWA + web push, prototip koç; ETag / `304`, cursor sayfalama |
-| M4 | 1 Oca 2027 | Tool-use koç, RAG, 40 senaryoluk guardrail seti, uyum skoru doğrulaması, maliyet limiti, haftalık özet; kuyruk + worker, retry/backoff, dead-letter queue, circuit breaker, lider kilidi, graceful shutdown |
+| M4 | 1 Oca 2027 | LLM aday karşılaştırması ve model seçimi, tool-use koç, RAG, 40 senaryoluk guardrail seti, uyum skoru doğrulaması, maliyet limiti, haftalık özet; kuyruk + worker, retry/backoff, dead-letter queue, circuit breaker, lider kilidi, graceful shutdown |
 | M5 | 17 Oca 2027 | Final rapor (etik/güvenlik, sınırlılıklar, AI Tools Usage), demo videosu, kurulum talimatı; k6 yük testi raporu, OpenTelemetry izleme, Grafana panoları |
